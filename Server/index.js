@@ -1,13 +1,24 @@
-const dotenv=require('dotenv');
-dotenv.config();
-const app=require("./src/app");
+const app=require("./app");
 const http=require('http');
-const connectDB=require("./src/config/db");
+const connectDB=require("./config/database");
+const config=require("./config/config");
+const {Server}=require('socket.io');
+const initSocket=require('./socket/chatSocket');
 connectDB();
 
-const Port=process.env.PORT;
+const Port=config.PORT || 5000;
 
 const server=http.createServer(app);
+
+const io = new Server(server, {
+  cors: {
+    origin: config.CLIENT_URL,
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+});
+
+initSocket(io);
 
 server.listen(Port,()=>{
     console.log(`Server is running on port ${Port}`);

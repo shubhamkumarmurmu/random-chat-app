@@ -1,19 +1,40 @@
-import { useAuth } from './contexts/AuthContext';
-import { AuthForm } from './components/AuthForm';
-import { Chat } from './components/Chat';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { SocketProvider } from './context/SocketContext';
+import ProtectedRoute from './components/ProtectedRoute';
+import Auth from'./pages/Auth';
+import Lobby from './pages/Lobby';
+import Chat from './pages/Chat';
 
-function App() {
-  const { user, loading } = useAuth();
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading...</div>
-      </div>
-    );
-  }
-
-  return user ? <Chat /> : <AuthForm />;
+export default function App() {
+  return (
+    <BrowserRouter>
+      <AuthProvider>
+        <SocketProvider>
+          <Routes>
+            <Route path="/" element={<Navigate to="/lobby" replace />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route
+              path="/lobby"
+              element={
+                <ProtectedRoute>
+                  <Lobby />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/chat/:sessionId"
+              element={
+                <ProtectedRoute>
+                  <Chat />
+                </ProtectedRoute>
+              }
+            />
+            <Route path="*" element={<Navigate to="/lobby" replace />} />
+          </Routes>
+        </SocketProvider>
+      </AuthProvider>
+    </BrowserRouter>
+  );
 }
-
-export default App;

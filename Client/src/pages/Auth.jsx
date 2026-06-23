@@ -1,15 +1,18 @@
 import { useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../context/AuthContext';
 import { MessageCircle } from 'lucide-react';
+import {useNavigate} from 'react-router-dom'
 
-export function AuthForm() {
+export default function AuthForm() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, signUp } = useAuth();
+  const { login, signup } = useAuth();
+
+  const navigate=useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,15 +21,19 @@ export function AuthForm() {
 
     try {
       if (isLogin) {
-        await signIn(email, password);
+        await login(email, password);
       } else {
         if (!username.trim()) {
           throw new Error('Username is required');
         }
-        await signUp(email, password, username);
+        await signup(username,email, password);
       }
+      setUsername('');
+      setEmail('');
+      setPassword('');
+      navigate('lobby');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'An error occurred');
+      setError(err?.message || 'An error occurred');;
     } finally {
       setLoading(false);
     }
@@ -66,16 +73,6 @@ export function AuthForm() {
             </button>
           </div>
         </div>
-
-        {isLogin && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p className="text-xs text-blue-900 font-medium mb-2">Demo Credentials:</p>
-            <div className="space-y-1 text-xs text-blue-800">
-              <p>Email: <code className="bg-white px-2 py-1 rounded font-mono">demo@example.com</code></p>
-              <p>Password: <code className="bg-white px-2 py-1 rounded font-mono">demo123456</code></p>
-            </div>
-          </div>
-        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {!isLogin && (
