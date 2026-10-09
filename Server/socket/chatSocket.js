@@ -13,7 +13,7 @@ function socketAuthMiddleware(socket, next) {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    socket.user = decoded; // { id, username }
+    socket.user = decoded; 
     next();
   } catch (err) {
     next(new Error('Authentication error: invalid token'));
@@ -34,17 +34,13 @@ function initSocket(io) {
     onlineUsers.set(socket.user.id, socket.id);
     await User.findByIdAndUpdate(socket.user.id, { isOnline: true });
 
-    // ---- Find a random stranger ----
     socket.on('find-partner', async () => {
-      // Avoid duplicate queue entries
       removeFromQueue(socket.id);
 
-      // If already paired, end the old pair first
       if (activePairs.has(socket.id)) {
-        return; // already chatting
+        return; 
       }
 
-      // Look for someone else waiting (not themself, ideally not already paired)
       const partnerIndex = waitingQueue.findIndex(
         (entry) => entry.userId !== socket.user.id
       );
