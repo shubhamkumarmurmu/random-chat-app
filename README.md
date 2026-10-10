@@ -399,6 +399,4 @@ Please follow the existing code style and include tests for new behavior where a
 <div align="center">
 
 
-<sub>Generate beautiful READMEs in seconds → <a href="https://readmebuddy.com">readmebuddy.com</a></sub>
-
 </div>

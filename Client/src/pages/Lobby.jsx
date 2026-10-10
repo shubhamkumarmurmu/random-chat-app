@@ -1,8 +1,16 @@
+
 import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useSocket } from "../context/SocketContext";
-import { MessageCircle, Radio, LogOut, Clock, Loader2 } from "lucide-react";
+import {
+  MessageCircle,
+  Radio,
+  LogOut,
+  Clock,
+  Loader2,
+  Users,
+} from "lucide-react";
 
 export default function Lobby() {
   const { user, logout } = useAuth();
@@ -11,33 +19,50 @@ export default function Lobby() {
 
   const [searching, setSearching] = useState(false);
   const [statusText, setStatusText] = useState("Ready to connect");
+  const [onlineUsers, setOnlineUsers] = useState(0);
 
   useEffect(() => {
     if (!socket) return;
 
-    const onWaiting = () => setStatusText("Searching for a stranger…");
+    const onWaiting = () => {
+      setStatusText("Searching for a stranger…");
+    };
+
     const onPartnerFound = ({ sessionId, partnerUsername }) => {
       setSearching(false);
-      navigate(`/chat/${sessionId}`, { state: { partnerUsername } });
+
+      navigate(`/chat/${sessionId}`, {
+        state: { partnerUsername },
+      });
     };
+
     const onError = ({ message }) => {
       setSearching(false);
       setStatusText(message || "Something went wrong");
     };
 
+    const onOnlineUsersCount = (count) => {
+      if (typeof count === "number" && Number.isFinite(count)) {
+        setOnlineUsers(count);
+      }
+    };
+
     socket.on("waiting-for-partner", onWaiting);
     socket.on("partner-found", onPartnerFound);
     socket.on("error-message", onError);
+    socket.on("online-users-count", onOnlineUsersCount);
 
     return () => {
       socket.off("waiting-for-partner", onWaiting);
       socket.off("partner-found", onPartnerFound);
       socket.off("error-message", onError);
+      socket.off("online-users-count", onOnlineUsersCount);
     };
   }, [socket, navigate]);
 
   const startSearch = () => {
     if (!socket || !connected) return;
+
     setSearching(true);
     setStatusText("Scanning for strangers…");
     socket.emit("find-partner");
@@ -45,6 +70,7 @@ export default function Lobby() {
 
   const cancelSearch = () => {
     if (!socket) return;
+
     socket.emit("cancel-search");
     setSearching(false);
     setStatusText("Ready to connect");
@@ -52,22 +78,38 @@ export default function Lobby() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 to-indigo-100 flex flex-col">
-      {/* Header */}
       <header className="bg-white shadow-sm border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-2 shrink-0">
             <MessageCircle className="w-7 h-7 text-blue-600" />
-            <span className="text-xl font-bold text-gray-800">ChatApp</span>
+            <span className="text-xl font-bold text-gray-800">
+              ChatApp
+            </span>
           </div>
 
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-2 sm:gap-4">
+            <div
+              className="flex items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1.5 sm:px-3 text-green-700 border border-green-100"
+              title="Unique users currently connected"
+              aria-live="polite"
+              aria-label={`${onlineUsers} users online`}
+            >
+              <Users className="w-4 h-4" />
+
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+
+              <span className="text-xs sm:text-sm font-semibold whitespace-nowrap">
+                {onlineUsers} online
+              </span>
+            </div>
+
             <span className="text-sm text-gray-500 font-medium hidden sm:block">
               {user?.username}
             </span>
 
             <Link
               to="/history"
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 transition-colors px-3 py-1.5 rounded-lg hover:bg-blue-50"
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-blue-600 transition-colors px-2 sm:px-3 py-1.5 rounded-lg hover:bg-blue-50"
             >
               <Clock className="w-4 h-4" />
               <span className="hidden sm:block">History</span>
@@ -75,7 +117,7 @@ export default function Lobby() {
 
             <button
               onClick={logout}
-              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-500 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-50"
+              className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-500 transition-colors px-2 sm:px-3 py-1.5 rounded-lg hover:bg-red-50"
             >
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:block">Sign Out</span>
@@ -84,24 +126,31 @@ export default function Lobby() {
         </div>
       </header>
 
-      {/* Main */}
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-8">
-          {/* Title */}
           <div className="flex items-center justify-center mb-2">
             <Radio className="w-10 h-10 text-blue-600 mr-3" />
-            <h1 className="text-2xl font-bold text-gray-800">Find a Stranger</h1>
+
+            <h1 className="text-2xl font-bold text-gray-800">
+              Find a Stranger
+            </h1>
           </div>
+
           <p className="text-center text-sm text-gray-500 mb-8">
             You'll be matched anonymously. Be kind. Leave any time.
           </p>
 
-          {/* Signal visualizer */}
+          <div className="flex items-center justify-center gap-2 mb-6">
+            <span className="flex items-center gap-2 rounded-full bg-green-50 px-4 py-2 text-sm font-medium text-green-700">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              {onlineUsers} users online now
+            </span>
+          </div>
+
           <div className="rounded-xl bg-gray-50 border border-gray-100 p-5 mb-6 flex items-center justify-center">
             <SignalBars active={searching} connected={connected} />
           </div>
 
-          {/* Status */}
           <div className="flex items-center justify-center gap-2 mb-6 min-h-6">
             {!connected ? (
               <span className="text-sm text-gray-400 flex items-center gap-1.5">
@@ -114,11 +163,11 @@ export default function Lobby() {
                 {statusText}
               </span>
             ) : (
-              <span className="text-sm text-gray-500">{statusText}</span>
+              <span className="text-sm text-gray-500">
+                {statusText}
+              </span>
             )}
           </div>
-
-          {/* Connection indicator pill */}
           <div className="flex items-center justify-center mb-6">
             <span
               className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full ${
@@ -129,14 +178,16 @@ export default function Lobby() {
             >
               <span
                 className={`w-1.5 h-1.5 rounded-full ${
-                  connected ? "bg-green-500 animate-pulse" : "bg-gray-400"
+                  connected
+                    ? "bg-green-500 animate-pulse"
+                    : "bg-gray-400"
                 }`}
               />
+
               {connected ? "Connected" : "Offline"}
             </span>
           </div>
 
-          {/* Action button */}
           {!searching ? (
             <button
               onClick={startSearch}
