@@ -5,9 +5,15 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Auth from'./pages/Auth';
 import Lobby from './pages/Lobby';
 import Chat from './pages/Chat';
+import { useEffect } from 'react';
+import {wakeUpBackend} from './api/axios';
 
 
 export default function App() {
+  useEffect(() => {
+    wakeUpBackend();
+  }, []);
+
   return (
     <BrowserRouter>
       <AuthProvider>

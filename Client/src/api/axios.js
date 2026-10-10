@@ -14,5 +14,20 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+export const wakeUpBackend = async () => {
+  try {
+    const response = await axios.get(
+      `${API_BASE_URL}/health`,
+      { timeout: 60000 }
+    );
+
+    console.log('Backend is awake:', response.data);
+    return true;
+  } catch (error) {
+    console.error('Backend wake-up failed:', error.message);
+    return false;
+  }
+};
+
 export default api;
 export { API_BASE_URL };
